@@ -1,0 +1,5 @@
+*.exe
+x64/Debug
+/.vs
+/OpenGL/OpenGL/x64/*
+/OpenGL/x64/*
