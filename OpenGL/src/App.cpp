@@ -1,9 +1,58 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <string>
 #include <iostream>
+#include <cassert>
 
-enum { ERR_GLUE_NOT_OK = 1 }; // Exit Error codes
+enum { ERR_GLEW_NOT_OK = 1 }; // Exit Error codes
+
+
+static unsigned int CompileShader(unsigned int type, const std::string& source)
+{
+    GLuint id = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
+
+    // Error Handling
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+
+    if (result == GL_FALSE) {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char *message = (char *)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!\n";
+        std::cout << message << std::endl;
+        glDeleteShader(id);
+
+        return 0u;
+    }
+
+    return id;
+}
+
+static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+{
+    GLuint program = glCreateProgram();
+    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+    assert(vs != 0u);
+    assert(fs != 0u);
+
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
+}
+
 
 int main(void)
 {
@@ -26,7 +75,7 @@ int main(void)
 
     if (glewInit() != GLEW_OK) {
         std::cout << "Error\n";
-        exit(ERR_GLUE_NOT_OK);
+        exit(ERR_GLEW_NOT_OK);
     }
     else {
         std::cout << glGetString(GL_VERSION) << std::endl;
@@ -56,6 +105,28 @@ int main(void)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x));
 
+    // our triangle shader codes
+    std::string vertexShader = R"(#version 330 core
+
+layout(location = 0) in vec4 position;
+
+void main()
+{
+    gl_Position = position;
+}
+)";
+    std::string fragmentShader = R"(#version 330 core
+
+layout(location = 0) out vec4 color;
+
+void main()
+{
+    color = vec4(0.35, 0.1, 0.83, 1.0);
+}
+)";
+    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+    glUseProgram(shader); // bind the program to use
+
     //glGenBuffers(0, &buffer); // bind no buffer
 
     /* Loop until the user closes the window */
@@ -74,6 +145,8 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
+
+    glDeleteProgram(shader); // delete the shader
 
     glfwTerminate();
     return 0;
