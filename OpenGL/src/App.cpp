@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-enum { ERR_GLUE_NOT_OK = 1 };
+enum { ERR_GLUE_NOT_OK = 1 }; // Exit Error codes
 
 int main(void)
 {
@@ -32,8 +32,18 @@ int main(void)
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
 
-    GLuint a;
-    glGenBuffers(1, &a);
+    float triangleVertices[] = {
+        -0.5f, -0.5f,
+        0.0f, 0.5f,
+        0.5f, -0.5f,
+    };
+    
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer); // select the buffer by binding
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+
+    //glGenBuffers(0, &buffer); // bind no buffer
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -41,11 +51,7 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBegin(GL_TRIANGLES);
-        glVertex2f(-0.5f, -0.5f);
-        glVertex2f(0.0f, 0.5f);
-        glVertex2f(0.5f, -0.5f);
-        glEnd();
+        glDrawArrays(GL_TRIANGLES, 0, 3); // draws the triangle by using the first index (first vec2) trhought the 3rd from the binded buffer
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
