@@ -1,4 +1,9 @@
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include <iostream>
+
+enum { ERR_GLUE_NOT_OK = 1 };
 
 int main(void)
 {
@@ -18,6 +23,17 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    if (glewInit() != GLEW_OK) {
+        std::cout << "Error\n";
+        exit(ERR_GLUE_NOT_OK);
+    }
+    else {
+        std::cout << glGetString(GL_VERSION) << std::endl;
+    }
+
+    GLuint a;
+    glGenBuffers(1, &a);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
