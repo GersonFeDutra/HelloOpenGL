@@ -32,16 +32,29 @@ int main(void)
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
 
-    float triangleVertices[] = {
+    union Vec2 {
+        struct {
+            float x, y;
+        };
+        float coords[2];
+    };
+    typedef Vec2 TrianglePositions[3];
+    TrianglePositions trianglePositions[] = {
         -0.5f, -0.5f,
         0.0f, 0.5f,
         0.5f, -0.5f,
     };
     
+    // Supply the Graphics Card with data
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer); // select the buffer by binding
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePositions), trianglePositions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    // Store the memory on the GPU
+
+    // Tells Open GL the layout of our attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x));
 
     //glGenBuffers(0, &buffer); // bind no buffer
 
@@ -51,7 +64,9 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3); // draws the triangle by using the first index (first vec2) trhought the 3rd from the binded buffer
+        // Using shaders to read binded data at the GPU to the screen
+        
+        glDrawArrays(GL_TRIANGLES, 0, 3); // draws the triangle by using the first index (first vec2) through the 3rd from the binded buffer
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
