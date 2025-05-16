@@ -133,17 +133,22 @@ int main(void)
         float coords[2];
     };
     typedef Vec2 TrianglePositions[3];
-    TrianglePositions trianglePositions[] = {
+    typedef TrianglePositions QuadrilateralPositions[2];
+    QuadrilateralPositions quadrilateralPositions[] = {
         -0.5f, -0.5f,
-        0.0f, 0.5f,
         0.5f, -0.5f,
+        0.5f, 0.5f,
+
+        0.5f, 0.5f,
+        -0.5f, 0.5f,
+        -0.5f, -0.5f,
     };
     
     // Supply the Graphics Card with data
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer); // select the buffer by binding
-    glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePositions), trianglePositions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadrilateralPositions), quadrilateralPositions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
     // Store the memory on the GPU
 
     // Tells Open GL the layout of our attribute
@@ -168,7 +173,7 @@ int main(void)
 
         // Using shaders to read binded data at the GPU to the screen
         
-        glDrawArrays(GL_TRIANGLES, 0, 3); // draws the triangle by using the first index (first vec2) through the 3rd from the binded buffer
+        glDrawArrays(GL_TRIANGLES, 0, 6); // draws the quadrilateral by using the first index (first vec2) through the 6rd from the binded buffer
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
