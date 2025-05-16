@@ -126,34 +126,52 @@ int main(void)
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
 
-    union Vec2 {
-        struct {
-            float x, y;
-        };
-        float coords[2];
+    struct Vec2 {
+		float x, y;
+
+        float& operator[](std::size_t i) {
+            return reinterpret_cast<float*>(this)[i];
+        }
     };
     typedef Vec2 TrianglePositions[3];
-    typedef TrianglePositions QuadrilateralPositions[2];
-    QuadrilateralPositions quadrilateralPositions[] = {
-        -0.5f, -0.5f,
-        0.5f, -0.5f,
-        0.5f, 0.5f,
+    struct Quadrilateral {
+		typedef Vec2 Positions[4];
 
-        0.5f, 0.5f,
-        -0.5f, 0.5f,
-        -0.5f, -0.5f,
+        Positions positions;
+        unsigned int indices[6];
+    };
+
+    Quadrilateral quadrilateral = {
+        .positions = {
+            { -0.5f, -0.5f }, // 0
+            { 0.5f, -0.5f },  // 1
+            { 0.5f, 0.5f },   // 2
+            { -0.5f, 0.5f },  // 3
+		},
+        .indices = {
+            0, 1, 2,
+            2, 3, 0,
+        },
     };
     
     // Supply the Graphics Card with data
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer); // select the buffer by binding
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadrilateralPositions), quadrilateralPositions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadrilateral.positions), quadrilateral.positions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
     // Store the memory on the GPU
 
     // Tells Open GL the layout of our attribute
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x));
+
+    // Setup the Index Buffer Object
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); // select the buffer by binding
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadrilateral.indices), quadrilateral.indices, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    // Store the memory on the GPU
+
 
     // our triangle shader codes
     ShaderProgramSources source = ParseShader("res/shaders/Test.shader");
@@ -173,7 +191,8 @@ int main(void)
 
         // Using shaders to read binded data at the GPU to the screen
         
-        glDrawArrays(GL_TRIANGLES, 0, 6); // draws the quadrilateral by using the first index (first vec2) through the 6rd from the binded buffer
+        // draws the quadrilateral by using the binded index buffer, with 6 index
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -182,7 +201,7 @@ int main(void)
         glfwPollEvents();
     }
 
-    //glDeleteProgram(shader); // delete the shader
+    glDeleteProgram(shader); // delete the shader
 
     glfwTerminate();
     return 0;
