@@ -161,6 +161,10 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // using core profile
+
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
     if (!window)
@@ -209,6 +213,11 @@ int main(void)
             2, 3, 0,
         },
     };
+
+    // Setup a Vertex Array Object
+    unsigned int vao;
+    GLCall(glGenVertexArrays(1, &vao));
+    GLCall(glBindVertexArray(vao));
     
     // Supply the Graphics Card with data
     GLuint buffer;
@@ -220,6 +229,7 @@ int main(void)
     // Tells Open GL the layout of our attribute
     GLCall(glEnableVertexAttribArray(0));
     GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x)));
+    // sets the layout from the bounded buffer and link it to the vao by the index at 0
 
     // Setup the Index Buffer Object
     GLuint ibo;
@@ -246,7 +256,8 @@ int main(void)
     GLCall(int location = glGetUniformLocation(shader, "u_Color")); // retrieve the location of the uniform "u_Color" shader variable
     my_assert(location != -1);
 
-    // unbound all buffers and programs
+    // unbound all vertex arrays, buffers and programs
+    GLCall(glBindVertexArray(0));
     GLCall(glUseProgram(0));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
@@ -260,20 +271,15 @@ int main(void)
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
         /* Bind all data to be used */
-		GLCall(glUseProgram(shader));
+		GLCall(glUseProgram(shader)); // bind the shader program
 		GLCall(glUniform4f(location, color.r, color.g, color.b, color.a)); // set the uniform value
 
-		GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-		// Tells Open GL the layout of our attribute (again)
-		GLCall(glEnableVertexAttribArray(0));
-		GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x)));
-
-		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+		GLCall(glBindVertexArray(vao)); // bind the Vertex Array Object
+		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)); // bind the buffer
 
         // Using shaders to read binded data at the GPU to the screen
         
         // draws the quadrilateral by using the binded index buffer, with 6 index
-
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         color.r += colorIncrement;
