@@ -153,7 +153,6 @@ int main(void)
     CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
     GetConsoleScreenBufferInfo(_hConsole, &consoleInfo);
     _saved_attributes = consoleInfo.wAttributes;
-
 #endif
 
     GLFWwindow* window;
@@ -172,6 +171,8 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(1);
 
     if (glewInit() != GLEW_OK) {
         std::cout << "Error\n";
@@ -227,6 +228,7 @@ int main(void)
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadrilateral.indices), quadrilateral.indices, GL_STATIC_DRAW)); // copy the buffer data to OpenGL
     // Store the memory on the GPU
 
+    //glGenBuffers(0, &buffer); // bind no buffer
 
     // our triangle shader codes
     ShaderProgramSources source = ParseShader("res/shaders/Test.shader");
@@ -236,7 +238,15 @@ int main(void)
     unsigned int shader = CreateShader(source.vertex, source.fragment);
     GLCall(glUseProgram(shader)); // bind the program to use
 
-    //glGenBuffers(0, &buffer); // bind no buffer
+    struct Color {
+        float r, g, b, a;
+    };
+    Color color(0.32f, 0.2f, 0.9f, 1.0f);
+
+    GLCall(int location = glGetUniformLocation(shader, "u_Color")); // retrieve the location of the uniform "u_Color" shader variable
+    my_assert(location != -1);
+
+    float colorIncrement = 0.05f;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -247,7 +257,19 @@ int main(void)
         // Using shaders to read binded data at the GPU to the screen
         
         // draws the quadrilateral by using the binded index buffer, with 6 index
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
+
+		GLCall(glUniform4f(location, color.r, color.g, color.b, color.a)); // set the uniform value
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+
+        color.r += colorIncrement;
+        if (color.r > 1.0f) {
+            color.r += 1.0 - color.r;
+            colorIncrement *= -1.0f;
+        }
+        else if (color.r < 0.0f) {
+            color.r -= color.r;
+            colorIncrement *= -1.0f;
+        }
 
         /* Swap front and back buffers */
         GLCall(glfwSwapBuffers(window));
@@ -258,6 +280,6 @@ int main(void)
 
     GLCall(glDeleteProgram(shader)); // delete the shader
 
-    GLCall(glfwTerminate());
+    glfwTerminate();
     return 0;
 }
