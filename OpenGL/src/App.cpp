@@ -8,7 +8,52 @@
 #include <fstream>
 #include <cassert>
 
+#if defined(_WIN32)
+#include <windows.h>
+HANDLE _hConsole;
+WORD _saved_attributes;
+#define SET_CLI_GREEN() SetConsoleTextAttribute(_hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+#define SET_CLI_RED() SetConsoleTextAttribute(_hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+#define RESET_CLI() SetConsoleTextAttribute(_hConsole, _saved_attributes);
+#else
+#define SET_CLI_RED() std::cout << "\033[32m";
+#define RESET_CLI() std::cout << "\033[m";
+#endif
+
+#ifdef _MSC_VER
+#define my_assert(E) if (!(E)) __debugbreak();
+#else
+#define my_assert(E) assert(E)
+#endif
+
+// for GCC/ Clang must define _DEBUG flags on build
+#ifdef _DEBUG
+#define GLCall(x) GLClearError(); \
+    x; \
+    my_assert(GLLogCall(#x, __FILE__, __LINE__))
+#else
+#define GLCall(x) x
+#endif
+
 enum { ERR_GLEW_NOT_OK = 1 }; // Exit Error codes
+
+
+static void GLClearError()
+{
+    while (glGetError() != GL_NO_ERROR);
+}
+
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+    while (GLenum error = glGetError()) {
+        SET_CLI_RED();
+        std::cout << "[OpenGL Error] (" << error << "): " << function << ' ' << file << ':' << line << std::endl;
+        RESET_CLI();
+        return false;
+    }
+    return true;
+}
 
 
 struct ShaderProgramSources
@@ -98,9 +143,19 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
     return program;
 }
 
-
 int main(void)
 {
+#if defined(_WIN32)
+    // Get the console handle
+    _hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // Save the current text attributes
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    GetConsoleScreenBufferInfo(_hConsole, &consoleInfo);
+    _saved_attributes = consoleInfo.wAttributes;
+
+#endif
+
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -111,7 +166,7 @@ int main(void)
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
     if (!window)
     {
-        glfwTerminate();
+        GLCall(glfwTerminate());
         return -1;
     }
 
@@ -156,20 +211,20 @@ int main(void)
     
     // Supply the Graphics Card with data
     GLuint buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer); // select the buffer by binding
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadrilateral.positions), quadrilateral.positions, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    GLCall(glGenBuffers(1, &buffer));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); // select the buffer by binding
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(quadrilateral.positions), quadrilateral.positions, GL_STATIC_DRAW)); // copy the buffer data to OpenGL
     // Store the memory on the GPU
 
     // Tells Open GL the layout of our attribute
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x));
+    GLCall(glEnableVertexAttribArray(0));
+    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x)));
 
     // Setup the Index Buffer Object
     GLuint ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); // select the buffer by binding
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadrilateral.indices), quadrilateral.indices, GL_STATIC_DRAW); // copy the buffer data to OpenGL
+    GLCall(glGenBuffers(1, &ibo));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)); // select the buffer by binding
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadrilateral.indices), quadrilateral.indices, GL_STATIC_DRAW)); // copy the buffer data to OpenGL
     // Store the memory on the GPU
 
 
@@ -179,7 +234,7 @@ int main(void)
     std::cout << "FRAGMENT:\n" << source.fragment << std::endl;
 
     unsigned int shader = CreateShader(source.vertex, source.fragment);
-    glUseProgram(shader); // bind the program to use
+    GLCall(glUseProgram(shader)); // bind the program to use
 
     //glGenBuffers(0, &buffer); // bind no buffer
 
@@ -187,22 +242,22 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
         // Using shaders to read binded data at the GPU to the screen
         
         // draws the quadrilateral by using the binded index buffer, with 6 index
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
 
         /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        GLCall(glfwSwapBuffers(window));
 
         /* Poll for and process events */
-        glfwPollEvents();
+        GLCall(glfwPollEvents());
     }
 
-    glDeleteProgram(shader); // delete the shader
+    GLCall(glDeleteProgram(shader)); // delete the shader
 
-    glfwTerminate();
+    GLCall(glfwTerminate());
     return 0;
 }
