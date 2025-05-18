@@ -14,6 +14,7 @@
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
+#include "Renderer.hpp"
 
 
 HANDLE _hConsole;
@@ -117,22 +118,22 @@ int main(void)
 		vb.unbind();
 		ib.unbind();
 
+		Renderer renderer;
+
 		float colorIncrement = 0.05f;
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
 		{
 			/* Render here */
-			GLCall(glClear(GL_COLOR_BUFFER_BIT));
+			renderer.clear();
 
 			/* Bind all data to be used */
 			shader.bind();
 			shader.setUniform4f("u_Color", color); // set the uniform value
-
-            va.bind();
-			ib.bind();
-
 			// Using shaders to read binded data at the GPU to the screen
+
+			renderer.draw(va, ib, shader);
 
 			// draws the quadrilateral by using the binded index buffer, with 6 index
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));

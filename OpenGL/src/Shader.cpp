@@ -42,6 +42,12 @@ void Shader::unbind() const
 }
 
 
+void Shader::setUniform1f(const std::string& name, float value)
+{
+    GLCall(glUniform1f(getUniformLocation(name), value)); // set the uniform value
+}
+
+
 void Shader::setUniform4f(const std::string& name, Vec4 v)
 {
     GLCall(glUniform4f(getUniformLocation(name), v.v1, v.v2, v.v3, v.v4)); // set the uniform value

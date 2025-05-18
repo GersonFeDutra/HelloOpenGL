@@ -30,6 +30,7 @@ public:
 	void unbind() const;
 
 	// set uniforms
+	void setUniform1f(const std::string& name, float value);
 	void setUniform4f(const std::string& name, Vec4 v);
 
 private:
