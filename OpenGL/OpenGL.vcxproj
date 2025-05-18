@@ -139,6 +139,7 @@
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Util.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
+    <ClCompile Include="src\VertexArray.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -148,7 +149,9 @@
     <ClInclude Include="src\IndexBuffer.hpp" />
     <ClInclude Include="src\Renderer.hpp" />
     <ClInclude Include="src\Util.hpp" />
+    <ClInclude Include="src\VertexArray.hpp" />
     <ClInclude Include="src\VertexBuffer.hpp" />
+    <ClInclude Include="src\VertexBufferLayout.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

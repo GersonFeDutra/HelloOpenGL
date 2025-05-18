@@ -10,8 +10,8 @@ public:
 	IndexBuffer(const unsigned int* data, unsigned int count);
 	~IndexBuffer();
 
-	void Bind() const; // Select (bind) the buffer in the GPU.
-	void Unbind() const;
+	void bind() const; // Select (bind) the buffer in the GPU.
+	void unbind() const;
 
-	inline unsigned int GetCount() const { return m_Count; }
+	inline unsigned int getCount() const { return m_Count; }
 };

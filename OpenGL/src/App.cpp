@@ -9,6 +9,7 @@
 #include <fstream>
 #include <cassert>
 
+#include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
 
@@ -176,23 +177,18 @@ int main(void)
 			},
 		};
 
-		// Setup a Vertex Array Object
-		unsigned int vao;
-		GLCall(glGenVertexArrays(1, &vao));
-		GLCall(glBindVertexArray(vao));
+        VertexArray va;
 
 		// Supply the Graphics Card with data
 		VertexBuffer vb(quadrilateral.positions, sizeof(quadrilateral.positions));
 
-		// Tells Open GL the layout of our attribute
-		GLCall(glEnableVertexAttribArray(0));
-		GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (const void*)offsetof(Vec2, x)));
-		// sets the layout from the bounded buffer and link it to the vao by the index at 0
+        VertexBufferLayout layout;
+        layout.push<float>(sizeof(Vec2) / sizeof(float));
+
+        va.addBuffer(vb, layout);
 
 		// Setup the Index Buffer Object
 		IndexBuffer ib(quadrilateral.indices, sizeof(quadrilateral.indices) / sizeof(decltype(*quadrilateral.indices)));
-
-		//glGenBuffers(0, &buffer); // bind no buffer
 
 		// our triangle shader codes
 		ShaderProgramSources source = ParseShader("res/shaders/Test.shader");
@@ -211,7 +207,7 @@ int main(void)
 		my_assert(location != -1);
 
 		// unbound all vertex arrays, buffers and programs
-		GLCall(glBindVertexArray(0));
+        va.unbind();
 		GLCall(glUseProgram(0));
 		GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
 		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
@@ -228,8 +224,8 @@ int main(void)
 			GLCall(glUseProgram(shader)); // bind the shader program
 			GLCall(glUniform4f(location, color.r, color.g, color.b, color.a)); // set the uniform value
 
-			GLCall(glBindVertexArray(vao)); // bind the Vertex Array Object
-			ib.Bind();
+            va.bind();
+			ib.bind();
 
 			// Using shaders to read binded data at the GPU to the screen
 
