@@ -50,6 +50,9 @@ void Shader::setUniform4f(const std::string& name, Vec4 v)
 
 int Shader::getUniformLocation(const std::string& name)
 {
+    if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
+        return m_UniformLocationCache[name];
+
 	GLCall(int location = glGetUniformLocation(m_RendererId, name.c_str())); // retrieve the location from the named uniform shader variable
     
     if constexpr (DEBUG) {
@@ -57,6 +60,7 @@ int Shader::getUniformLocation(const std::string& name)
 			warn("uniform" << name << " doens't exist!");
 		}
     }
+    m_UniformLocationCache[name] = location;
 
     return location;
 }

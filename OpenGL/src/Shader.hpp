@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include "Util.hpp"
 #include "Math.hpp"
@@ -20,7 +21,7 @@ private:
 	std::string m_FilePath;
 #endif
 	unsigned int m_RendererId;
-	// caching for uniforms
+	std::unordered_map<std::string, int> m_UniformLocationCache; // caching for uniforms
 public:
 	Shader(const std::string& filename);
 	~Shader();
