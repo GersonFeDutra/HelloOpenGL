@@ -1,7 +1,3 @@
-#include "Util.hpp"
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include <array>
 #include <string>
 #include <sstream>
@@ -9,97 +5,16 @@
 #include <fstream>
 #include <cassert>
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include "Util.hpp"
+#include "Math.hpp"
 #include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
+#include "Shader.hpp"
 
-
-struct ShaderProgramSources
-{
-    std::string vertex;
-    std::string fragment;
-};
-
-
-static ShaderProgramSources ParseShader(const std::string& filePath)
-{
-    std::ifstream stream(filePath);
-
-    struct ShaderStreams {
-        enum class Type { NONE = -1, VERTEX = 0, FRAGMENT = 1 };
-
-        std::array<std::stringstream, 2> streams;
-
-        std::stringstream& vertex() { return streams[(int)Type::VERTEX]; }
-        std::stringstream& fragment() { return streams[(int)Type::FRAGMENT]; }
-    };
-
-    // TODO -> Read with regex
-    std::string line;
-    ShaderStreams ss;
-    ShaderStreams::Type type = ShaderStreams::Type::NONE;
-    while (getline(stream, line))
-    {
-        if (line.find("#shader") != std::string::npos) {
-            if (line.find("vertex") != std::string::npos)
-                type = ShaderStreams::Type::VERTEX;
-            else if (line.find("fragment") != std::string::npos)
-                type = ShaderStreams::Type::FRAGMENT;
-        }
-        else {
-            assert(type != ShaderStreams::Type::NONE);
-            ss.streams[(int)type] << line << '\n';
-        }
-    }
-
-    return { ss.vertex().str(), ss.fragment().str() };
-}
-
-
-static unsigned int CompileShader(unsigned int type, const std::string& source)
-{
-    GLuint id = glCreateShader(type);
-    const char* src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
-
-    // Error Handling
-    int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-
-    if (result == GL_FALSE) {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char *message = (char *)alloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!\n";
-        std::cout << message << std::endl;
-        glDeleteShader(id);
-
-        return 0u;
-    }
-
-    return id;
-}
-
-static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
-{
-    GLuint program = glCreateProgram();
-    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-    assert(vs != 0u);
-    assert(fs != 0u);
-
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return program;
-}
 
 HANDLE _hConsole;
 WORD _saved_attributes;
@@ -108,7 +23,7 @@ int main(void)
 {
 #if defined(_WIN32)
     // Get the console handle
-    _hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    _hConsole = GetStdHandle(STD_ERROR_HANDLE);
 
     // Save the current text attributes
     CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -147,13 +62,6 @@ int main(void)
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
 
-    struct Vec2 {
-        float x, y;
-
-        float& operator[](std::size_t i) {
-            return reinterpret_cast<float*>(this)[i];
-        }
-    };
     typedef Vec2 TrianglePositions[3];
     struct Quadrilateral {
         typedef Vec2 Positions[4];
@@ -191,26 +99,23 @@ int main(void)
 		IndexBuffer ib(quadrilateral.indices, sizeof(quadrilateral.indices) / sizeof(decltype(*quadrilateral.indices)));
 
 		// our triangle shader codes
-		ShaderProgramSources source = ParseShader("res/shaders/Test.shader");
-		std::cout << "VERTEX:\n" << source.vertex << std::endl;
-		std::cout << "FRAGMENT:\n" << source.fragment << std::endl;
-
-		unsigned int shader = CreateShader(source.vertex, source.fragment);
-		GLCall(glUseProgram(shader)); // bind the program to use
+		Shader shader("res/shaders/Test.shader");
+		shader.bind();
 
 		struct Color {
 			float r, g, b, a;
+
+			operator::Vec4() const {
+				return Vec4{ r, g, b, a };
+			}
 		};
 		Color color(0.32f, 0.2f, 0.9f, 1.0f);
 
-		GLCall(int location = glGetUniformLocation(shader, "u_Color")); // retrieve the location of the uniform "u_Color" shader variable
-		my_assert(location != -1);
-
 		// unbound all vertex arrays, buffers and programs
         va.unbind();
-		GLCall(glUseProgram(0));
-		GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+		shader.unbind();
+		vb.unbind();
+		ib.unbind();
 
 		float colorIncrement = 0.05f;
 
@@ -221,8 +126,8 @@ int main(void)
 			GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
 			/* Bind all data to be used */
-			GLCall(glUseProgram(shader)); // bind the shader program
-			GLCall(glUniform4f(location, color.r, color.g, color.b, color.a)); // set the uniform value
+			shader.bind();
+			shader.setUniform4f("u_Color", color); // set the uniform value
 
             va.bind();
 			ib.bind();
@@ -248,9 +153,6 @@ int main(void)
 			/* Poll for and process events */
 			GLCall(glfwPollEvents());
 		}
-
-		GLCall(glDeleteProgram(shader)); // delete the shader
-
     } // End Rendering Scope
 
     glfwTerminate();

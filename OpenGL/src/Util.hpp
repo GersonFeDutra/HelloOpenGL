@@ -4,12 +4,15 @@
 #include <windows.h>
 extern HANDLE _hConsole;
 extern WORD _saved_attributes;
-#define SET_CLI_GREEN() SetConsoleTextAttribute(_hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-#define SET_CLI_RED() SetConsoleTextAttribute(_hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
-#define RESET_CLI() SetConsoleTextAttribute(_hConsole, _saved_attributes);
+#define SET_CLI_RED() SetConsoleTextAttribute(_hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY)
+#define SET_CLI_GREEN() SetConsoleTextAttribute(_hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY)
+#define SET_CLI_YELLOW() SetConsoleTextAttribute(_hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY)
+#define RESET_CLI() SetConsoleTextAttribute(_hConsole, _saved_attributes)
 #else
-#define SET_CLI_RED() std::cout << "\033[32m";
-#define RESET_CLI() std::cout << "\033[m";
+#define SET_CLI_RED() std::cerr << "\033[31m"
+#define SET_CLI_GREEN() std::cerr << "\033[32m"
+#define SET_CLI_YELLOW() std::cerr << "\033[33m"
+#define RESET_CLI() std::cerr << "\033[m"
 #endif
 
 #ifdef _MSC_VER
@@ -21,12 +24,21 @@ extern WORD _saved_attributes;
 
 // for GCC/ Clang must define _DEBUG flags on build
 #ifdef _DEBUG
+
 #define GLCall(x) GLClearError(); \
     x; \
     my_assert(GLLogCall(#x, __FILE__, __LINE__))
+constexpr bool DEBUG = 1;
+#define warn(E) SET_CLI_YELLOW(); \
+    std::cerr << "[Warning] " << E << __FILE__ << ':' << __LINE__ << std::endl; RESET_CLI()
+
 #else
+
 #define GLCall(x) x
-#endif
+constexpr bool DEBUG = 0;
+#define warn(E)
+
+#endif // _DEBUG
 
 enum { ERR_GLEW_NOT_OK = 1 }; // Exit Error codes
 

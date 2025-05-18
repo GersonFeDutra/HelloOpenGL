@@ -10,5 +10,5 @@ public:
 	~VertexBuffer();
 
 	void bind() const; // Select (bind) the buffer in the GPU.
-	void Unbind() const; // Select no buffer.
+	void unbind() const; // Select no buffer.
 };
