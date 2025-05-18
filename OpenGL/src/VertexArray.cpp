@@ -24,7 +24,7 @@ void VertexArray::addBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 		const auto& element = elements[i];
 
 		// Tells Open GL the layout of our attribute
-		GLCall(glEnableVertexAttribArray(0));
+		GLCall(glEnableVertexAttribArray(i));
 		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.getStride(), (const void *)offset));
 		// sets the layout from the bounded buffer and link it to the vao by the index at 0
 

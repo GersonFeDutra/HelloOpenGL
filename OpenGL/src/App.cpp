@@ -15,6 +15,7 @@
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
 #include "Renderer.hpp"
+#include "Texture.hpp"
 
 
 HANDLE _hConsole;
@@ -65,20 +66,24 @@ int main(void)
 
     typedef Vec2 TrianglePositions[3];
     struct Quadrilateral {
-        typedef Vec2 Positions[4];
+		struct Vertex {
+			Vec2 position;
+			Vec2 textureCoords;
+		};
+        typedef Vertex Vertexes[4];
 
-        Positions positions;
+        Vertexes vertexes;
         unsigned int indices[6];
     };
 
     { // Start Rendering Scope
 
 		Quadrilateral quadrilateral = {
-			.positions = {
-				{ -0.5f, -0.5f }, // 0
-				{ 0.5f, -0.5f },  // 1
-				{ 0.5f, 0.5f },   // 2
-				{ -0.5f, 0.5f },  // 3
+			.vertexes = {
+				{ .position = { -0.5f, -0.5f }, .textureCoords = { 0.0f, 0.0f } }, // 0
+				{ .position = { 0.5f, -0.5f }, .textureCoords = { 1.0f, 0.0f } }, // 1
+				{ .position = { 0.5f, 0.5f }, .textureCoords = { 1.0f, 1.0f } }, // 2
+				{ .position = { -0.5f, 0.5f }, .textureCoords = { 0.0f, 1.0f } }, // 3
 			},
 			.indices = {
 				0, 1, 2,
@@ -86,12 +91,16 @@ int main(void)
 			},
 		};
 
+		GLCall(glEnable(GL_BLEND));
+		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)); // blend the transparancy
+
         VertexArray va;
 
 		// Supply the Graphics Card with data
-		VertexBuffer vb(quadrilateral.positions, sizeof(quadrilateral.positions));
+		VertexBuffer vb(quadrilateral.vertexes, sizeof(quadrilateral.vertexes));
 
         VertexBufferLayout layout;
+        layout.push<float>(sizeof(Vec2) / sizeof(float));
         layout.push<float>(sizeof(Vec2) / sizeof(float));
 
         va.addBuffer(vb, layout);
@@ -102,6 +111,10 @@ int main(void)
 		// our triangle shader codes
 		Shader shader("res/shaders/Test.shader");
 		shader.bind();
+
+		Texture texture("res/textures/kintaro_oe.png");
+		texture.bind();
+		shader.setUniform1i("u_Texture", 0);
 
 		struct Color {
 			float r, g, b, a;
@@ -114,9 +127,9 @@ int main(void)
 
 		// unbound all vertex arrays, buffers and programs
         va.unbind();
-		shader.unbind();
 		vb.unbind();
 		ib.unbind();
+		shader.unbind();
 
 		Renderer renderer;
 
@@ -131,12 +144,11 @@ int main(void)
 			/* Bind all data to be used */
 			shader.bind();
 			shader.setUniform4f("u_Color", color); // set the uniform value
+			//texture.bind();
+			//shader.setUniform1i("u_Texture", 0);
 			// Using shaders to read binded data at the GPU to the screen
 
 			renderer.draw(va, ib, shader);
-
-			// draws the quadrilateral by using the binded index buffer, with 6 index
-			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
 			color.r += colorIncrement;
 			if (color.r > 1.0f) {

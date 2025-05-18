@@ -3,3 +3,5 @@ x64/Debug
 /.vs
 /OpenGL/OpenGL/x64/*
 /OpenGL/x64/*
+OpenGL/res/textures/kintaro_oe.jpg
+OpenGL/res/textures/kintaro.*
