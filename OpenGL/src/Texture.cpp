@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 // TODO -> add vendor to compiler include paths
-#include "vendor/stb_image/stb_image.h"
+#include "stb_image/stb_image.h"
 
 #include "Texture.hpp"
 
