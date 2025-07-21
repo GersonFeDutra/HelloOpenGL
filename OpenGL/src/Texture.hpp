@@ -20,5 +20,5 @@ public:
 	void unbind() const;
 
 	inline int getWidth() const { return m_Width; }
-	inline int getHeight() const { return m_Width; }
+	inline int getHeight() const { return m_Height; }
 };
