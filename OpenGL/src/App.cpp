@@ -181,17 +181,22 @@ int main(void)
 
 		float wasPressed = false;
 
+		GLFWcursor* moveCursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
+		GLFWcursor* handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
 		{
 			/* Render here */
 			renderer.clear();
 
+			Vec2<double> mousePos{ 0.0f, 0.0f };
+			glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+
 			bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 			if (pressed) {
+				glfwSetCursor(window, moveCursor);
 
-				Vec2<double> mousePos{ 0.0f, 0.0f };
-				glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 
 				if (!wasPressed) {
 					lastMousePos = mousePos;
@@ -205,6 +210,25 @@ int main(void)
 				shader.setUniformMat4f("u_MVP", mvp);
 
 				lastMousePos = mousePos;
+			}
+			else {
+				glm::vec4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
+				topRight = mvp * topRight;
+
+				glm::vec4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
+				bottomLeft = mvp * bottomLeft;
+				
+				glm::vec4 mouseNormalizedPos{ mousePos.x, mousePos.y, 0.0f, 1.0f };
+				mouseNormalizedPos = proj * mouseNormalizedPos;
+
+				std::cout << mouseNormalizedPos.y << "|" << bottomLeft.y << ", " << topRight.y << '\n';
+				if (mouseNormalizedPos.x > bottomLeft.x && mouseNormalizedPos.x < topRight.x &&
+					-mouseNormalizedPos.y > bottomLeft.y && -mouseNormalizedPos.y < topRight.y) {
+					glfwSetCursor(window, handCursor);
+				} // coordenadas do mouse no eixo y invertido (topo à baixo) em relação ao sistema de coordenadas
+				else {
+					glfwSetCursor(window, nullptr);
+				}
 			}
 			wasPressed = pressed;
 
