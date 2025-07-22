@@ -5,3 +5,4 @@ x64/Debug
 /OpenGL/x64/*
 OpenGL/res/textures/kintaro_oe.jpg
 OpenGL/res/textures/kintaro.*
+*.ini

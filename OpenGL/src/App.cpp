@@ -20,6 +20,10 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 
 HANDLE _hConsole;
 WORD _saved_attributes;
@@ -174,6 +178,14 @@ int main(void)
 
 		Renderer renderer;
 
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::StyleColorsDark();
+
+		ImGui_ImplGlfw_InitForOpenGL(window, true);
+		ImGui_ImplOpenGL3_Init();
+
 		float colorIncrement = 0.05f;
 
 		Vec2<double> lastMousePos{ 0.0f, 0.0f };
@@ -184,11 +196,22 @@ int main(void)
 		GLFWcursor* moveCursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
 		GLFWcursor* handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
 
+		// Imgui state
+		bool show_demo_window = true;
+		bool show_another_window = false;
+		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
 		{
+			glfwPollEvents();
+
 			/* Render here */
 			renderer.clear();
+
+			ImGui_ImplGlfw_NewFrame();
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui::NewFrame();
 
 			Vec2<double> mousePos{ 0.0f, 0.0f };
 			glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
@@ -196,7 +219,6 @@ int main(void)
 			bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 			if (pressed) {
 				glfwSetCursor(window, moveCursor);
-
 
 				if (!wasPressed) {
 					lastMousePos = mousePos;
@@ -221,7 +243,6 @@ int main(void)
 				glm::vec4 mouseNormalizedPos{ mousePos.x, mousePos.y, 0.0f, 1.0f };
 				mouseNormalizedPos = proj * mouseNormalizedPos;
 
-				std::cout << mouseNormalizedPos.y << "|" << bottomLeft.y << ", " << topRight.y << '\n';
 				if (mouseNormalizedPos.x > bottomLeft.x && mouseNormalizedPos.x < topRight.x &&
 					-mouseNormalizedPos.y > bottomLeft.y && -mouseNormalizedPos.y < topRight.y) {
 					glfwSetCursor(window, handCursor);
@@ -251,6 +272,39 @@ int main(void)
 				colorIncrement *= -1.0f;
 			}
 
+			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+			{
+				static float f = 0.0f;
+				static int counter = 0;
+
+				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+				ImGui::Checkbox("Another Window", &show_another_window);
+
+				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+				ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+					counter++;
+				ImGui::SameLine();
+				ImGui::Text("counter = %d", counter);
+
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+				ImGui::End();
+			}
+
+			ImGui::Render();
+
+			int w, h;
+			glfwGetFramebufferSize(window, &w, &h);
+			glViewport(0, 0, w, h);
+			glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 			/* Swap front and back buffers */
 			GLCall(glfwSwapBuffers(window));
 
@@ -259,6 +313,12 @@ int main(void)
 		}
 	} // End Rendering Scope
 
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	//glfwDestroyWindow(window);
 	glfwTerminate();
+
 	return 0;
 }
