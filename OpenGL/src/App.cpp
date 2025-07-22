@@ -24,6 +24,7 @@
 HANDLE _hConsole;
 WORD _saved_attributes;
 
+
 int main(void)
 {
 #if defined(_WIN32)
@@ -148,10 +149,13 @@ int main(void)
 		shader.bind();
 
 		//glm::mat4 proj = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -1.0f, 1.0f); // cria uma projeção hortogonal para consertar o aspect ratio do plano 2D
-		glm::mat4 proj = glm::ortho(0.0f, texture_size.x, 0.0f, texture_size.y, -1.0f, 1.0f); // cria uma projeção hortogonal para mapear as coordenadas equivalentes ao tamanho da imagem
+		glm::mat4 proj = glm::ortho(0.0f, texture_size.x, 0.0f, texture_size.y, -1.0f, 1.0f); // cria uma projeção hortogonal para mapear as coordenadas equivalentes ao tamanho da 
+		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0)); // matriz de transformação que simula o "olho" da câmera
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0)); // transformação de um modelo na cena, nesse caso a imagem
+		glm::mat4 mvp = proj * view * model; // Model View Projection Matrix
 
 		shader.setUniform1i("u_Texture", 0);
-		shader.setUniformMat4f("u_MVP", proj);
+		shader.setUniformMat4f("u_MVP", mvp);
 
 		struct Color {
 			float r, g, b, a;
@@ -172,11 +176,37 @@ int main(void)
 
 		float colorIncrement = 0.05f;
 
+		Vec2<double> lastMousePos{ 0.0f, 0.0f };
+		glfwGetCursorPos(window, &lastMousePos.x, &lastMousePos.y);
+
+		float wasPressed = false;
+
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
 		{
 			/* Render here */
 			renderer.clear();
+
+			bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+			if (pressed) {
+
+				Vec2<double> mousePos{ 0.0f, 0.0f };
+				glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+
+				if (!wasPressed) {
+					lastMousePos = mousePos;
+				}
+
+				Vec2<float> deltaMouseMove = (mousePos - lastMousePos);
+
+				// Move a câmera
+				view = glm::translate(view, glm::vec3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
+				mvp = proj * view * model; // Atualiza o MVP
+				shader.setUniformMat4f("u_MVP", mvp);
+
+				lastMousePos = mousePos;
+			}
+			wasPressed = pressed;
 
 			/* Bind all data to be used */
 			shader.bind();
