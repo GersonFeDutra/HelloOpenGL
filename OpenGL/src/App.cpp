@@ -159,7 +159,6 @@ int main(void)
 		glm::mat4 mvp = proj * view * model; // Model View Projection Matrix
 
 		shader.setUniform1i("u_Texture", 0);
-		shader.setUniformMat4f("u_MVP", mvp);
 
 		struct Color {
 			float r, g, b, a;
@@ -196,10 +195,11 @@ int main(void)
 		GLFWcursor* moveCursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
 		GLFWcursor* handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
 
-		// Imgui state
-		bool show_demo_window = true;
-		bool show_another_window = false;
-		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		glm::vec3 translation(200, 200, 0);
+
+		ImVec2 win_pos{};
+		ImVec2 win_size{};
+		ImVec2 gui_mouse{};
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
@@ -209,59 +209,75 @@ int main(void)
 			/* Render here */
 			renderer.clear();
 
+			// Dear Im Gui Frame
 			ImGui_ImplGlfw_NewFrame();
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui::NewFrame();
 
-			Vec2<double> mousePos{ 0.0f, 0.0f };
-			glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+			// Model View Projection live update
+			model = glm::translate(glm::mat4(1.0f), translation);
+			mvp = proj * view * model;
 
-			bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-			if (pressed) {
-				glfwSetCursor(window, moveCursor);
+			{ // Process Input
+				// Get mouse cursor coords
+				Vec2<double> mousePos{ 0.0f, 0.0f };
+				glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 
-				if (!wasPressed) {
-					lastMousePos = mousePos;
-				}
-
-				Vec2<float> deltaMouseMove = (mousePos - lastMousePos);
-
-				// Move a câmera
-				view = glm::translate(view, glm::vec3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
-				mvp = proj * view * model; // Atualiza o MVP
-				shader.setUniformMat4f("u_MVP", mvp);
-
-				lastMousePos = mousePos;
-			}
-			else {
-				glm::vec4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
-				topRight = mvp * topRight;
-
-				glm::vec4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
-				bottomLeft = mvp * bottomLeft;
-				
-				glm::vec4 mouseNormalizedPos{ mousePos.x, mousePos.y, 0.0f, 1.0f };
-				mouseNormalizedPos = proj * mouseNormalizedPos;
-
-				if (mouseNormalizedPos.x > bottomLeft.x && mouseNormalizedPos.x < topRight.x &&
-					-mouseNormalizedPos.y > bottomLeft.y && -mouseNormalizedPos.y < topRight.y) {
-					glfwSetCursor(window, handCursor);
-				} // coordenadas do mouse no eixo y invertido (topo à baixo) em relação ao sistema de coordenadas
-				else {
+				bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+				if (bool mouse_inside_window = 
+						(gui_mouse.x >= win_pos.x && gui_mouse.x <= win_pos.x + win_size.x &&
+						gui_mouse.y >= win_pos.y && gui_mouse.y <= win_pos.y + win_size.y)
+						) {
 					glfwSetCursor(window, nullptr);
 				}
-			}
-			wasPressed = pressed;
+				else if (pressed) {
+					glfwSetCursor(window, moveCursor);
+
+					if (!wasPressed) {
+						lastMousePos = mousePos;
+					}
+
+					Vec2<float> deltaMouseMove = (mousePos - lastMousePos);
+
+					// Move a câmera
+					view = glm::translate(view, glm::vec3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
+					mvp = proj * view * model; // Atualiza o MVP
+					shader.setUniformMat4f("u_MVP", mvp);
+
+					lastMousePos = mousePos;
+				}
+				else {
+					glm::vec4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
+					topRight = mvp * topRight;
+
+					glm::vec4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
+					bottomLeft = mvp * bottomLeft;
+				
+					glm::vec4 mouseNormalizedPos{ mousePos.x, mousePos.y, 0.0f, 1.0f };
+					mouseNormalizedPos = proj * mouseNormalizedPos;
+
+					if (mouseNormalizedPos.x > bottomLeft.x && mouseNormalizedPos.x < topRight.x &&
+						-mouseNormalizedPos.y > bottomLeft.y && -mouseNormalizedPos.y < topRight.y) {
+						glfwSetCursor(window, handCursor);
+					} // coordenadas do mouse no eixo y invertido (topo à baixo) em relação ao sistema de coordenadas
+					else {
+						glfwSetCursor(window, nullptr);
+					}
+				}
+				wasPressed = pressed;
+			} // Process Input
 
 			/* Bind all data to be used */
 			shader.bind();
 			shader.setUniform4f("u_Color", color); // set the uniform value
+			shader.setUniformMat4f("u_MVP", mvp); // set the MVP transforms
 			//texture.bind();
 			//shader.setUniform1i("u_Texture", 0);
 			// Using shaders to read binded data at the GPU to the screen
 
 			renderer.draw(va, ib, shader);
 
+			// IGNORED
 			color.r += colorIncrement;
 			if (color.r > 1.0f) {
 				color.r += 1.0f - color.r;
@@ -275,23 +291,14 @@ int main(void)
 			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 			{
 				static float f = 0.0f;
-				static int counter = 0;
-
 				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-				ImGui::Checkbox("Another Window", &show_another_window);
-
-				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-				ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-					counter++;
-				ImGui::SameLine();
-				ImGui::Text("counter = %d", counter);
+				ImGui::SliderFloat3("float", &translation.x, 0.0f, texture_size.x);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+				win_pos = ImGui::GetWindowPos();
+				win_size = ImGui::GetWindowSize();
+				gui_mouse = ImGui::GetMousePos();
 				ImGui::End();
 			}
 
@@ -300,8 +307,6 @@ int main(void)
 			int w, h;
 			glfwGetFramebufferSize(window, &w, &h);
 			glViewport(0, 0, w, h);
-			glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-			glClear(GL_COLOR_BUFFER_BIT);
 
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
