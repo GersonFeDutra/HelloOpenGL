@@ -230,7 +230,7 @@ int main(void)
 
 			// Model View Projection live update
 			model = glm::translate(Matrix4(1.0f), translation);
-			mvp = proj * view * model;
+			mvp = proj * view * model; // update mvp for some process calculations
 
 			{ // Process Input
 				// Get mouse cursor coords
@@ -255,8 +255,6 @@ int main(void)
 
 					// Move a câmera
 					view = glm::translate(view, Vector3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
-					mvp = proj * view * model; // Atualiza o MVP
-					shader.setUniformMat4f("u_MVP", mvp);
 
 					last_mouse_pos = mouse_pos;
 				}
@@ -283,13 +281,26 @@ int main(void)
 
 			/* Bind all data to be used */
 			shader.bind();
-			shader.setUniform4f("u_Color", color); // set the uniform value
-			shader.setUniformMat4f("u_MVP", mvp); // set the MVP transforms
-			//texture.bind();
-			//shader.setUniform1i("u_Texture", 0);
-			// Using shaders to read binded data at the GPU to the screen
+			{
+				mvp = proj * view * model; // Atualiza o MVP
 
-			renderer.draw(va, ib, shader);
+				shader.setUniform4f("u_Color", color); // set the uniform value
+				shader.setUniformMat4f("u_MVP", mvp); // set the MVP transforms
+				//texture.bind();
+				//shader.setUniform1i("u_Texture", 0);
+				// Using shaders to read binded data at the GPU to the screen
+
+				renderer.draw(va, ib, shader);
+			}
+			static Vector3 translationB(100, 100, 0);
+			{
+				glm::mat4 modelB = glm::translate(Matrix4(1.0f), translationB);
+				mvp = proj * view * modelB;
+
+				shader.setUniform4f("u_Color", color);
+				shader.setUniformMat4f("u_MVP", mvp);
+				renderer.draw(va, ib, shader);
+			}
 
 			// IGNORED
 			color.r += color_increment;
@@ -305,9 +316,10 @@ int main(void)
 			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 			{
 				static float f = 0.0f;
-				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+				ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
 
-				ImGui::SliderFloat3("float", &translation.x, 0.0f, texture_size.x);            // Edit 1 float using a slider from 0.0f to 1.0f
+				ImGui::SliderFloat3("A", &translation.x, 0.0f, texture_size.x); // Edit 1 float using a slider from 0.0f to 1.0f
+				ImGui::SliderFloat3("B", &translationB.x, 0.0f, texture_size.x);
 
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 				win_pos = ImGui::GetWindowPos();
