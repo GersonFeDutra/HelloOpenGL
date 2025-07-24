@@ -9,7 +9,6 @@
 #include <GLFW/glfw3.h>
 
 #include "Util.hpp"
-#include "Math.hpp"
 #include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
@@ -31,6 +30,13 @@ WORD _saved_attributes;
 
 int main(void)
 {
+	using Vector2 = glm::vec2;
+	using Vector2_double = glm::dvec2;
+	using Vector2_int = glm::ivec2;
+	using Vector3 = glm::vec3;
+	using Vector4 = glm::vec4;
+	using Matrix4 = glm::mat4;
+
 #if defined(_WIN32)
 	// Get the console handle
 	_hConsole = GetStdHandle(STD_ERROR_HANDLE);
@@ -42,7 +48,7 @@ int main(void)
 #endif
 
 	GLFWwindow* window;
-	Vec2<int> window_size{ 640, 480 };
+	Vector2_int window_size{ 640, 480 };
 
 	/* Initialize the library */
 	if (!glfwInit())
@@ -73,11 +79,11 @@ int main(void)
 		std::cout << glGetString(GL_VERSION) << std::endl;
 	}
 
-	typedef Vec2<> TrianglePositions[3];
+	typedef Vector2 TrianglePositions[3];
 	struct Quadrilateral {
 		struct Vertex {
-			Vec2<> position;
-			Vec2<> textureCoords;
+			Vector2 position;
+			Vector2 textureCoords;
 		};
 		typedef Vertex Vertexes[4];
 
@@ -101,7 +107,7 @@ int main(void)
 		//   bottom = altura da borda inferior
 
 		window_size = { texture.getWidth(), texture.getHeight() }; // Let's change the size using the image resolution
-		Vec2<float> texture_size = window_size; // Save the coords in floats
+		Vector2 texture_size = window_size; // Save the coords in floats
 
 		// Reset window size considering the image resolution and the system's decorations
 		window_size.x += left + right;
@@ -119,12 +125,14 @@ int main(void)
 		//glViewport(0, 0, width, height);
 		//});
 
+		Vector2 texture_center = texture_size / 2.0f;
+
 		Quadrilateral quadrilateral = {
 			.vertexes = {
-				{.position = { 0.0f, 0.0f }, .textureCoords = { 0.0f, 0.0f } }, // 0
-				{.position = { texture_size.x, 0.0f }, .textureCoords = { 1.0f, 0.0f } }, // 1
-				{.position = { texture_size.x, texture_size.y }, .textureCoords = { 1.0f, 1.0f } }, // 2
-				{.position = { 0.0f, texture_size.y }, .textureCoords = { 0.0f, 1.0f } }, // 3
+				{.position = { -texture_center.x, -texture_center.y }, .textureCoords = { 0.0f, 0.0f } }, // 0
+				{.position = {  texture_center.x, -texture_center.y }, .textureCoords = { 1.0f, 0.0f } }, // 1
+				{.position = {  texture_center.x,  texture_center.y }, .textureCoords = { 1.0f, 1.0f } }, // 2
+				{.position = { -texture_center.x,  texture_center.y }, .textureCoords = { 0.0f, 1.0f } }, // 3
 			},
 			.indices = {
 				0, 1, 2,
@@ -138,8 +146,8 @@ int main(void)
 		VertexBuffer vb(quadrilateral.vertexes, sizeof(quadrilateral.vertexes));
 
 		VertexBufferLayout layout;
-		layout.push<float>(sizeof(Vec2<>) / sizeof(float));
-		layout.push<float>(sizeof(Vec2<>) / sizeof(float));
+		layout.push<float>(sizeof(Vector2) / sizeof(float));
+		layout.push<float>(sizeof(Vector2) / sizeof(float));
 
 		va.addBuffer(vb, layout);
 
@@ -153,18 +161,25 @@ int main(void)
 		shader.bind();
 
 		//glm::mat4 proj = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -1.0f, 1.0f); // cria uma projeção hortogonal para consertar o aspect ratio do plano 2D
-		glm::mat4 proj = glm::ortho(0.0f, texture_size.x, 0.0f, texture_size.y, -1.0f, 1.0f); // cria uma projeção hortogonal para mapear as coordenadas equivalentes ao tamanho da 
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0)); // matriz de transformação que simula o "olho" da câmera
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0)); // transformação de um modelo na cena, nesse caso a imagem
-		glm::mat4 mvp = proj * view * model; // Model View Projection Matrix
+		
+		Vector3 translation(texture_center.x, texture_center.y, 0.0f);
+
+		// cria uma projeção hortogonal para mapear as coordenadas equivalentes ao tamanho da 
+		Matrix4 proj = glm::ortho(0.0f, texture_size.x, 0.0f, texture_size.y, -1.0f, 1.0f);
+		// matriz de transformação que simula o "olho" da câmera
+		//Matrix4 view = glm::translate(Matrix4(1.0f), Vector3(-100, 0, 0)); // offset
+		Matrix4 view(1.0f);
+		// transformação de um modelo na cena, nesse caso a imagem
+		Matrix4 model = glm::translate(Matrix4(1.0f), translation);
+		Matrix4 mvp = proj * view * model; // Model View Projection Matrix
 
 		shader.setUniform1i("u_Texture", 0);
 
 		struct Color {
 			float r, g, b, a;
 
-			operator::Vec4<>() const {
-				return Vec4<>{ r, g, b, a };
+			operator Vector4() const {
+				return Vector4{ r, g, b, a };
 			}
 		};
 		Color color(0.32f, 0.2f, 0.9f, 1.0f);
@@ -184,18 +199,17 @@ int main(void)
 
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL3_Init();
+		
+		float color_increment = 0.05f;
 
-		float colorIncrement = 0.05f;
-
-		Vec2<double> lastMousePos{ 0.0f, 0.0f };
-		glfwGetCursorPos(window, &lastMousePos.x, &lastMousePos.y);
+		
+		Vector2_double last_mouse_pos{ 0.0f, 0.0f };
+		glfwGetCursorPos(window, &last_mouse_pos.x, &last_mouse_pos.y);
 
 		float wasPressed = false;
 
-		GLFWcursor* moveCursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
-		GLFWcursor* handCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-
-		glm::vec3 translation(200, 200, 0);
+		GLFWcursor* move_cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
+		GLFWcursor* hand_cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
 
 		ImVec2 win_pos{};
 		ImVec2 win_size{};
@@ -205,7 +219,7 @@ int main(void)
 		while (!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
-
+			
 			/* Render here */
 			renderer.clear();
 
@@ -215,13 +229,13 @@ int main(void)
 			ImGui::NewFrame();
 
 			// Model View Projection live update
-			model = glm::translate(glm::mat4(1.0f), translation);
+			model = glm::translate(Matrix4(1.0f), translation);
 			mvp = proj * view * model;
 
 			{ // Process Input
 				// Get mouse cursor coords
-				Vec2<double> mousePos{ 0.0f, 0.0f };
-				glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+				Vector2_double mouse_pos{ 0.0f, 0.0f };
+				glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
 
 				bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 				if (bool mouse_inside_window = 
@@ -231,34 +245,34 @@ int main(void)
 					glfwSetCursor(window, nullptr);
 				}
 				else if (pressed) {
-					glfwSetCursor(window, moveCursor);
+					glfwSetCursor(window, move_cursor);
 
 					if (!wasPressed) {
-						lastMousePos = mousePos;
+						last_mouse_pos = mouse_pos;
 					}
 
-					Vec2<float> deltaMouseMove = (mousePos - lastMousePos);
+					Vector2 deltaMouseMove = (mouse_pos - last_mouse_pos);
 
 					// Move a câmera
-					view = glm::translate(view, glm::vec3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
+					view = glm::translate(view, Vector3(deltaMouseMove.x, -deltaMouseMove.y, 0.0f));
 					mvp = proj * view * model; // Atualiza o MVP
 					shader.setUniformMat4f("u_MVP", mvp);
 
-					lastMousePos = mousePos;
+					last_mouse_pos = mouse_pos;
 				}
 				else {
-					glm::vec4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
+					Vector4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
 					topRight = mvp * topRight;
 
-					glm::vec4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
+					Vector4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
 					bottomLeft = mvp * bottomLeft;
 				
-					glm::vec4 mouseNormalizedPos{ mousePos.x, mousePos.y, 0.0f, 1.0f };
+					Vector4 mouseNormalizedPos{ mouse_pos.x, mouse_pos.y, 0.0f, 1.0f };
 					mouseNormalizedPos = proj * mouseNormalizedPos;
 
 					if (mouseNormalizedPos.x > bottomLeft.x && mouseNormalizedPos.x < topRight.x &&
 						-mouseNormalizedPos.y > bottomLeft.y && -mouseNormalizedPos.y < topRight.y) {
-						glfwSetCursor(window, handCursor);
+						glfwSetCursor(window, hand_cursor);
 					} // coordenadas do mouse no eixo y invertido (topo à baixo) em relação ao sistema de coordenadas
 					else {
 						glfwSetCursor(window, nullptr);
@@ -278,14 +292,14 @@ int main(void)
 			renderer.draw(va, ib, shader);
 
 			// IGNORED
-			color.r += colorIncrement;
+			color.r += color_increment;
 			if (color.r > 1.0f) {
 				color.r += 1.0f - color.r;
-				colorIncrement *= -1.0f;
+				color_increment *= -1.0f;
 			}
 			else if (color.r < 0.0f) {
 				color.r -= color.r; 
-				colorIncrement *= -1.0f;
+				color_increment *= -1.0f;
 			}
 
 			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.

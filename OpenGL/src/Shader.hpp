@@ -6,7 +6,6 @@
 #include "glm/glm.hpp"
 
 #include "Util.hpp"
-#include "Math.hpp"
 
 
 struct ShaderProgramSources
@@ -34,7 +33,7 @@ public:
 	// set uniforms
 	void setUniform1i(const std::string& name, int value);
 	void setUniform1f(const std::string& name, float value);
-	void setUniform4f(const std::string& name, Vec4<> v);
+	void setUniform4f(const std::string& name, glm::vec4 v);
 	void setUniformMat4f(const std::string& name, const glm::mat4& value);
 
 private:

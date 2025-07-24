@@ -53,9 +53,9 @@ void Shader::setUniform1f(const std::string& name, float value)
 }
 
 
-void Shader::setUniform4f(const std::string& name, Vec4<> v)
+void Shader::setUniform4f(const std::string& name, glm::vec4 v)
 {
-    GLCall(glUniform4f(getUniformLocation(name), v.v1, v.v2, v.v3, v.v4)); // set the uniform value
+    GLCall(glUniform4f(getUniformLocation(name), v.x, v.y, v.z, v.w)); // set the uniform value
 }
 
 void Shader::setUniformMat4f(const std::string& name, const glm::mat4& matrix)
