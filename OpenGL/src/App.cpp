@@ -259,10 +259,10 @@ int main(void)
 					last_mouse_pos = mouse_pos;
 				}
 				else {
-					Vector4 topRight{ texture_size.x, texture_size.y, 0.0f, 1.0f };
+					Vector4 topRight{ texture_center.x, texture_center.y, 0.0f, 1.0f };
 					topRight = mvp * topRight;
 
-					Vector4 bottomLeft{ 0.0f, 0.0f, 0.0f, 1.0f };
+					Vector4 bottomLeft{ -texture_center.x, -texture_center.y, 0.0f, 1.0f };
 					bottomLeft = mvp * bottomLeft;
 				
 					Vector4 mouseNormalizedPos{ mouse_pos.x, mouse_pos.y, 0.0f, 1.0f };
