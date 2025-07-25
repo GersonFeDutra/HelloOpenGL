@@ -4,7 +4,7 @@
 
 
 namespace test {
-	TestMenu::TestMenu(Test*& current, const std::string*& name) : current{current}, currentName{name}
+	TestMenu::TestMenu(GLFWwindow* window, ImGuiIO& io, Test*& current, const std::string*& name) : Test{ window, io }, current{current}, currentName{name}
 	{
 	}
 	void TestMenu::onImGuiRender()

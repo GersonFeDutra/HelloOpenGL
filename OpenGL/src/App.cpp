@@ -16,6 +16,7 @@
 #include "Renderer.hpp"
 
 #include "tests/TestClearColor.hpp"
+#include "tests/TestTexture2D.hpp"
 
 HANDLE _hConsole;
 WORD _saved_attributes;
@@ -129,9 +130,10 @@ int main(int argc, const char* argv[])
 		test::Test* current = nullptr;
 		std::string menu_name{};
 		const std::string *current_name = &menu_name;
-		auto* menu = new test::TestMenu{ current, current_name };
+		auto* menu = new test::TestMenu{ window, io, current, current_name };
 
 		menu->registerTest<test::ClearColor>("Clear Color");
+		menu->registerTest<test::Texture2D>("Texture 2D");
 
 		if (!first_scene.empty()) {
 			if (menu->changeTest(first_scene))

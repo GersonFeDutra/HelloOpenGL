@@ -5,7 +5,10 @@
 
 
 namespace test {
-	ClearColor::ClearColor() : color{colors::default_clear_color}
+	ClearColor::ClearColor(GLFWwindow* window, ImGuiIO& io) : Test{ window, io }
+	{
+	}
+	ClearColor::ClearColor(GLFWwindow* window, ImGuiIO& io, Color color) : Test{ window, io }, color{color}
 	{
 	}
 

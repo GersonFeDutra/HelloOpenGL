@@ -36,7 +36,7 @@ namespace test {
 		VertexBuffer vb;
 		IndexBuffer ib;
 		VertexBufferLayout layout;
-		Shader shader{ "res/shaders/Test.shader" }; // our triangle shader codes
+		Shader shader{ "res/shaders/Test.shader" }; // our triangles shader codes
 
 		bool wasPressed = false;
 		Vector3 translations[2] = { Vector3(0.0f), Vector3(-100.0f, -100.0f, 0.0f) };

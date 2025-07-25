@@ -11,7 +11,7 @@
 
 
 namespace test {
-	TestMvp::TestMvp(GLFWwindow *window, ImGuiIO& io) : window{ window }, io { io }
+	TestMvp::TestMvp(GLFWwindow* window, ImGuiIO& io) : Test{ window, io }
 	{
 		// Carrega a textura que será usada na construção do viewport e que será impressa
 		Texture texture("res/textures/kintaro_oe.png");
@@ -89,8 +89,6 @@ namespace test {
 		glfwGetCursorPos(window, &last_mouse_pos.x, &last_mouse_pos.y);
 
 		shader.setUniform1i("u_Texture", 0);
-
-		Color color(0.32f, 0.2f, 0.9f, 1.0f);
 
 		// unbound all vertex arrays, buffers and programs
 		va.unbind();

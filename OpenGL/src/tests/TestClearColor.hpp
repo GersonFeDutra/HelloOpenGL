@@ -14,13 +14,14 @@ namespace test {
 	class ClearColor : public Test
 	{
 	public:
-		ClearColor();
+		ClearColor(GLFWwindow* window, ImGuiIO& io);
+		ClearColor(GLFWwindow* window, ImGuiIO& io, Color color);
 		virtual ~ClearColor() override;
 
 		virtual void onUpdate(float deltaTime) override;
 		virtual void onRender() override;
 		virtual void onImGuiRender() override;
 	protected:
-		Color color;
+		Color color = colors::default_clear_color;
 	};
 }

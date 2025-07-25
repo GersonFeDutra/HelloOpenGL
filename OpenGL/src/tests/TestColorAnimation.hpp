@@ -1,10 +1,10 @@
 #pragma once
 
-#include "TestClearColor.hpp"
+#include "TestColorAnimation.hpp"
 
 namespace test {
 	class ColorAnimation : public ClearColor {
-		ColorAnimation() = default;
+		ColorAnimation(GLFWwindow* window, ImGuiIO& io) : Test{ window, io } {}
 		void onUpdate(float deltaTime) override;
 		void onRender() override;
 	private:
