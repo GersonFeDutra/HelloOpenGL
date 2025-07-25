@@ -17,6 +17,7 @@
 
 #include "tests/TestClearColor.hpp"
 #include "tests/TestTexture2D.hpp"
+#include "tests/TestColorAnimation.hpp"
 
 HANDLE _hConsole;
 WORD _saved_attributes;
@@ -134,6 +135,7 @@ int main(int argc, const char* argv[])
 
 		menu->registerTest<test::ClearColor>("Clear Color");
 		menu->registerTest<test::Texture2D>("Texture 2D");
+		menu->registerTest<test::ColorAnimation>("Color Animation");
 
 		if (!first_scene.empty()) {
 			if (menu->changeTest(first_scene))
@@ -141,8 +143,6 @@ int main(int argc, const char* argv[])
 		}
 		if (current == nullptr)
 			current = menu;
-
-		//test::ClearColor test_clear_color;
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))

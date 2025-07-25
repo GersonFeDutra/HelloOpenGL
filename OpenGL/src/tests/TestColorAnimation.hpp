@@ -1,13 +1,17 @@
 #pragma once
 
-#include "TestColorAnimation.hpp"
+#include "TestClearColor.hpp"
 
 namespace test {
+
 	class ColorAnimation : public ClearColor {
-		ColorAnimation(GLFWwindow* window, ImGuiIO& io) : Test{ window, io } {}
+	public:
+		ColorAnimation(GLFWwindow* window, ImGuiIO& io);
+		ColorAnimation(GLFWwindow* window, ImGuiIO& io, float increment);
+
 		void onUpdate(float deltaTime) override;
-		void onRender() override;
 	private:
 		float colorIncrement = 0.05f;
 	};
+
 }

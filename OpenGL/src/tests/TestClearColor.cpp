@@ -12,14 +12,6 @@ namespace test {
 	{
 	}
 
-	ClearColor::~ClearColor()
-	{
-	}
-
-	void ClearColor::onUpdate(float deltaTime)
-	{
-	}
-
 	void ClearColor::onRender()
 	{
 		GLCall(glClearColor(color.r, color.g, color.b, color.a)); 

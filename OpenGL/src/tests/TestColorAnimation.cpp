@@ -1,7 +1,10 @@
-#include "ColorAnimation.hpp"
+#include "TestColorAnimation.hpp"
 
 
 namespace test {
+	ColorAnimation::ColorAnimation(GLFWwindow* window, ImGuiIO& io) : ClearColor{ window, io } {}
+	ColorAnimation::ColorAnimation(GLFWwindow* window, ImGuiIO& io, float increment) : ClearColor{ window, io }, colorIncrement{ increment } {}
+
 	void ColorAnimation::onUpdate(float deltaTime)
 	{
 		color.r += colorIncrement;
@@ -13,9 +16,5 @@ namespace test {
 			color.r -= color.r;
 			colorIncrement *= -1.0f;
 		}
-	}
-	void ColorAnimation::onRender()
-	{
-		//shader.setUniform4f("u_Color", color); // set the uniform value
 	}
 }
