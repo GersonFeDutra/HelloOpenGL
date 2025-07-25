@@ -1,0 +1,20 @@
+#pragma once
+
+namespace test {
+
+	class Test
+	{
+	public:
+		Test() {}
+		virtual ~Test() {}
+
+		virtual void onInput() {}
+
+		virtual void onUpdate(float deltaTime) {}
+
+		virtual void onRender() {}
+
+		virtual void onImGuiRender() {}
+	};
+
+} // namespace test

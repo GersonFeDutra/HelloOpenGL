@@ -30,12 +30,12 @@ layout(location = 0) out vec4 color;
 in vec2 v_TexCoord;
 
 // loads data from the CPU
-uniform vec4 u_Color;
+//uniform vec4 u_Color;
 uniform sampler2D u_Texture;
 
 void main()
 {
     vec4 texColor = texture(u_Texture, v_TexCoord); // samples the texture coordinate
-    color = u_Color;  // outputs the custom color uniform to the vertex buffer
+    //color = u_Color;  // outputs the custom color uniform to the vertex buffer
     color = texColor; // outputs the sampled color to the vertex buffer
 }
