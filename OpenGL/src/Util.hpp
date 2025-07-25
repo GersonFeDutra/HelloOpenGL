@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdio>
+#include <iostream>
+
 #if defined(_WIN32)
 #include <windows.h>
 extern HANDLE _hConsole;
@@ -21,6 +24,30 @@ extern WORD _saved_attributes;
 #include <cassert>
 #define my_assert(E) assert(E)
 #endif
+
+template <typename... Args>
+constexpr void print_warning(const char* message, Args...args) {
+    SET_CLI_YELLOW();
+    fprintf(stderr, message, args...);
+    fputc('\n', stderr);
+    RESET_CLI();
+}
+
+template <typename... Args>
+constexpr void print_error(const char* message, Args...args) {
+    SET_CLI_RED();
+    fprintf(stderr, message, args...);
+    fputc('\n', stderr);
+    RESET_CLI();
+}
+
+template <typename... Args>
+constexpr void print_success(const char* message, Args...args) {
+    SET_CLI_GREEN();
+    fprintf(stderr, message, args...);
+    fputc('\n', stderr);
+    RESET_CLI();
+}
 
 // for GCC/ Clang must define _DEBUG flags on build
 #ifdef _DEBUG

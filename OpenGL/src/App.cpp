@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -20,8 +21,54 @@ HANDLE _hConsole;
 WORD _saved_attributes;
 
 
-int main(void)
+static void show_help(const char* command_name)
 {
+	std::cout << "Use: " << command_name << "[-s | --scene <name>]" <<
+R"(
+These are the available test scene <name>s:
+	ClearColor - shows a background color picker.
+	ColorAnimation - shows an animated color background.
+	MVP - shows a Model View Projection test with two movable textures.
+)";
+}
+
+
+int main(int argc, const char* argv[])
+{
+	std::string first_scene{};
+	{ // parce cli args
+		const char* command_name = *argv;
+		while (--argc) {
+			const char* arg = *argv;
+			if (*arg == '-') {
+				switch (*(arg + 1)) {
+				case '-': {
+					if (std::strcmp(arg + 2, "scene"))
+						first_scene = std::string{ arg + 2 };
+					else
+						print_warning("Option '%s' is not valid.", arg + 2);
+				}; break;
+				case 's': {
+					if (std::strcmp(arg + 2, "scene"))
+						first_scene = std::string{ arg + 2 };
+					else {
+						print_warning("Option '%s' not valid.", arg + 2);
+						show_help(command_name);
+					}
+				}; break;
+				default: {
+					print_warning("Option '%s' not valid.", arg + 1);
+					show_help(command_name);
+				}
+				}
+			}
+			else {
+				print_warning("Invalid positional argument: '%s'.", arg);
+				show_help(command_name);
+			}
+		}
+	} // parce cli args
+
 #if defined(_WIN32)
 	// Get the console handle
 	_hConsole = GetStdHandle(STD_ERROR_HANDLE);
@@ -79,7 +126,21 @@ int main(void)
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL3_Init();
 
-		test::ClearColor test_clear_color;
+		test::Test* current = nullptr;
+		std::string menu_name{};
+		const std::string *current_name = &menu_name;
+		auto* menu = new test::TestMenu{ current, current_name };
+
+		menu->registerTest<test::ClearColor>("Clear Color");
+
+		if (!first_scene.empty()) {
+			if (menu->changeTest(first_scene))
+				print_warning("Test Scene '%s' not found.", first_scene);
+		}
+		if (current == nullptr)
+			current = menu;
+
+		//test::ClearColor test_clear_color;
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
@@ -87,16 +148,18 @@ int main(void)
 			glfwPollEvents();
 			
 			/* Render here */
+			GLCall(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 			renderer.clear();
 
 			// Input Process
-			// ...
+			current->onInput();
 
 			// Update Process
-			test_clear_color.onUpdate(0.0f);
+			// TODO -> Get delta time
+			current->onUpdate(0.0f);
 
 			// Render Process
-			test_clear_color.onRender();
+			current->onRender();
 
 			// Dear Im Gui Frame
 			ImGui_ImplGlfw_NewFrame();
@@ -104,7 +167,13 @@ int main(void)
 			ImGui::NewFrame();
 
 			// GUI Process
-			test_clear_color.onImGuiRender();
+			if (current != menu) {
+				ImGui::Begin("Test");
+				if (ImGui::Button("<-"))
+					menu->reset();
+				ImGui::End();
+			}
+			current->onImGuiRender();
 			ImGui::Render();
 
 			int w, h;
@@ -119,6 +188,9 @@ int main(void)
 			/* Poll for and process events */
 			GLCall(glfwPollEvents());
 		}
+		if (current != menu)
+			delete menu;
+		delete current;
 	} // End Rendering Scope
 
 	ImGui_ImplOpenGL3_Shutdown();
