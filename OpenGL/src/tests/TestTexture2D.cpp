@@ -28,7 +28,7 @@ namespace test {
 		// Reset window size considering the image resolution and the system's decorations
 		window_size.x += left + right;
 		window_size.y += top + bottom;
-		std::cout << window_size.x << ", l:" << left << ", r:" << right << '\n';
+		
 		glfwSetWindowSize(window, window_size.x, window_size.y);
 
 		Quadrilateral quadrilateral = {

@@ -141,6 +141,7 @@
     <ClCompile Include="src\tests\Test.cpp" />
     <ClCompile Include="src\tests\TestClearColor.cpp" />
     <ClCompile Include="src\tests\TestColorAnimation.cpp" />
+    <ClCompile Include="src\tests\TestMvp.cpp" />
     <ClCompile Include="src\tests\TestTexture2D.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Util.cpp" />
@@ -307,6 +308,7 @@
     <ClInclude Include="src\tests\Test.hpp" />
     <ClInclude Include="src\tests\TestClearColor.hpp" />
     <ClInclude Include="src\tests\TestColorAnimation.hpp" />
+    <ClInclude Include="src\tests\TestMvp.hpp" />
     <ClInclude Include="src\tests\TestTexture2D.hpp" />
     <ClInclude Include="src\Texture.hpp" />
     <ClInclude Include="src\Util.hpp" />

@@ -18,6 +18,7 @@
 #include "tests/TestClearColor.hpp"
 #include "tests/TestTexture2D.hpp"
 #include "tests/TestColorAnimation.hpp"
+#include "tests/TestMvp.hpp"
 
 HANDLE _hConsole;
 WORD _saved_attributes;
@@ -134,8 +135,9 @@ int main(int argc, const char* argv[])
 		auto* menu = new test::TestMenu{ window, io, current, current_name };
 
 		menu->registerTest<test::ClearColor>("Clear Color");
-		menu->registerTest<test::Texture2D>("Texture 2D");
 		menu->registerTest<test::ColorAnimation>("Color Animation");
+		menu->registerTest<test::Texture2D>("Texture 2D");
+		menu->registerTest<test::Mvp>("Model View Projection Transformations");
 
 		if (!first_scene.empty()) {
 			if (menu->changeTest(first_scene))
